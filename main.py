@@ -95,11 +95,64 @@ NOTATION_PATTERNS = {
     "алгебра": [r'\bA\b', r'\bB\b', r'\bF\b', r'\bFr\b'],
 }
 
+class TextPreprocessor:
+    def clean_text(self, text):
+        text = text.replace("\u00ad", "")
+        text = text.replace("ﬁ", "fi").replace("ﬂ", "fl")
+        text = re.sub(r"(?<=\w)-\n(?=\w)", "", text)
+        text = re.sub(r"[ \t]+", " ", text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        text = re.sub(r"(?<![.!?:;])\n(?!\n)", " ", text)
+        text = re.sub(r"\s+", " ", text)
+        return text.strip()
 
+    def remove_front_and_back_matter(self, text):
+        lower = text.lower()
+        start = 0
+        start_patterns = [
+            r"\bаннотация\b",
+            r"\babstract\b",
+            r"\bвведение\b",
+            r"\bintroduction\b",
+            r"\b1\.\s"
+        ]
+        start_candidates = []
+        for pattern in start_patterns:
+            match = re.search(pattern, lower, flags=re.IGNORECASE)
+            if match:
+                start_candidates.append(match.start())
+        if start_candidates:
+            start = min(start_candidates)
 
-class GlossaryBuilder:
+        end = len(text)
+        tail_start = int(len(text) * 0.55)
+        tail = lower[tail_start:]
+        end_patterns = [
+            r"\bсписок\s+литературы\b",
+            r"\bлитература\b",
+            r"\breferences\b",
+            r"\bbibliography\b"
+        ]
+        for pattern in end_patterns:
+            match = re.search(pattern, tail, flags=re.IGNORECASE)
+            if match:
+                end = min(end, tail_start + match.start())
 
-    
+        return text[start:end].strip()
+
+    def split_sentences(self, text):
+        parts = re.split(
+            r"(?<=[.!?])\s+(?=(?:[А-ЯЁA-Z0-9]|Теорема|Лемма|Следствие|Предложение|Утверждение|Определение|Theorem|Lemma|Corollary|Proposition|Definition))",
+            text
+        )
+        result = []
+        for part in parts:
+            part = part.strip()
+            if 40 <= len(part) <= 1200:
+                result.append(part)
+        return result
+
+class GlossaryBuilder:    
     def __init__(self, glossary_dict):
         self.glossary = glossary_dict
         self.notation_table = []
