@@ -295,6 +295,7 @@ class ArticleStatsExtractor:
     
     
     def __init__(self):
+        self.preprocessor = TextPreprocessor()
         self.all_terms = {**KEY_TERMS, **EXTRA_TERMS}
     
     def extract_text_from_pdf(self, pdf_path):
@@ -308,19 +309,9 @@ class ArticleStatsExtractor:
         return "\n".join(full_text)
     
     def postprocess_text(self, text):
-
-        text = re.sub(r'(?<!\n)\n(?!\n)', ' ', text)
-        
-
-        text = re.sub(r'\n\s*\d+\s*\n', '\n', text)
-        
-
-        text = re.sub(r'\s+', ' ', text)
-        
-
-        text = re.sub(r'[^\S\n]+', ' ', text)
-        
-        return text.strip()
+        text = self.preprocessor.clean_text(text)
+        text = self.preprocessor.remove_front_and_back_matter(text)
+        return text
     
     def count_terms(self, text):
         """Подсчитывает все ключевые термины в тексте."""
