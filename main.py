@@ -95,6 +95,16 @@ NOTATION_PATTERNS = {
     "алгебра": [r'\bA\b', r'\bB\b', r'\bF\b', r'\bFr\b'],
 }
 
+DATASET_FIELDS = [
+    "Формулировка на естественном языке (русский)",
+    "Формулировка на естественном языке (английский)",
+    "Запись на формальном языке",
+    "Код Lean 4 + Mathlib",
+    "Ключевые слова (русский / английский)",
+    "Тип утверждения",
+    "Источник"
+]
+
 class TextPreprocessor:
     def clean_text(self, text):
         text = text.replace("\u00ad", "")
