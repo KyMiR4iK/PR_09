@@ -430,6 +430,73 @@ class StatementDatasetBuilder:
     def __init__(self):
         self.preprocessor = TextPreprocessor()
 
+    def classify_statement(self, text):
+        scores = Counter()
+
+        type_patterns = {
+            "ISOMORPH": [
+                r"изоморф",
+                r"isomorph",
+                r"эквивалент",
+                r"equivalent"
+            ],
+            "SUBSTRUCTURE": [
+                r"подгрупп",
+                r"подкольц",
+                r"подмодул",
+                r"подалгебр",
+                r"идеал",
+                r"subgroup",
+                r"subring",
+                r"submodule",
+                r"subalgebra",
+                r"ideal"
+            ],
+            "ACTION": [
+                r"действи",
+                r"орбит",
+                r"стабилизатор",
+                r"представлен",
+                r"action",
+                r"orbit",
+                r"stabili[sz]er",
+                r"representation"
+            ],
+            "CLASSIFICATION": [
+                r"классификац",
+                r"класс",
+                r"характериз",
+                r"classification",
+                r"class",
+                r"characteri[sz]"
+            ],
+            "PROPERTY": [
+                r"свойств",
+                r"коммутатив",
+                r"абелев",
+                r"конечн",
+                r"прост",
+                r"нильпотент",
+                r"разрешим",
+                r"property",
+                r"commutative",
+                r"abelian",
+                r"finite",
+                r"simple",
+                r"nilpotent",
+                r"solvable"
+            ]
+        }
+
+        for statement_type, patterns in type_patterns.items():
+            for pattern in patterns:
+                scores[statement_type] += len(re.findall(pattern, text, flags=re.IGNORECASE))
+
+        if not scores or max(scores.values()) == 0:
+            return "PROPERTY"
+
+        return scores.most_common(1)[0][0]
+    
     def make_context_statement(self, sentences, index):
         parts = []
 
@@ -454,10 +521,13 @@ class StatementDatasetBuilder:
             statement = self.make_context_statement(sentences, index)
             keywords = self.detect_keywords(statement)
 
+            statement_type = self.classify_statement(statement)
+
             candidates.append({
                 "statement": statement,
                 "main_sentence": sentence,
                 "keywords": keywords,
+                "statement_type": statement_type,
                 "source": source
             })
 
