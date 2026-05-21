@@ -510,6 +510,83 @@ class StatementDatasetBuilder:
 
         return " ".join(parts)
 
+    def make_formal_statement(self, statement_type, keywords):
+        joined = " ".join(keywords).lower()
+
+        if statement_type == "ISOMORPH":
+            return "∀ A B, A ≅ B ↔ ∃ f : A → B, Isomorphism(f)"
+
+        if statement_type == "SUBSTRUCTURE":
+            if "идеал" in joined or "кольцо" in joined or "ring" in joined or "ideal" in joined:
+                return "I ◁ R ∧ ∀ r ∈ R, ∀ x ∈ I, r * x ∈ I"
+
+            if "модуль" in joined or "module" in joined:
+                return "N ≤ M ∧ ∀ r ∈ R, ∀ x ∈ N, r • x ∈ N"
+
+            return "H ≤ G ∧ ∀ x y ∈ H, x * y⁻¹ ∈ H"
+
+        if statement_type == "ACTION":
+            return "∀ g h ∈ G, ∀ x ∈ X, (g * h) • x = g • (h • x) ∧ 1 • x = x"
+
+        if statement_type == "CLASSIFICATION":
+            return "∀ X, X ∈ C ↔ P₁(X) ∧ P₂(X) ∧ ... ∧ Pₙ(X)"
+
+        return "∀ X, AlgebraicObject(X) → P(X)"
+
+    def make_lean_code(self, record_number, statement_type, keywords):
+        name = f"dataset_item_{record_number:04d}"
+        joined = " ".join(keywords).lower()
+
+        if statement_type == "ISOMORPH":
+            return f"""import Mathlib
+
+    theorem {name} {{G H : Type*}} [Group G] [Group H] :
+        Nonempty (G ≃* H) → Nonempty (H ≃* G) := by
+    intro h
+    rcases h with ⟨e⟩
+    exact ⟨e.symm⟩"""
+
+        if statement_type == "SUBSTRUCTURE":
+            if "модуль" in joined or "module" in joined:
+                return f"""import Mathlib
+
+    theorem {name} {{R M : Type*}} [Ring R] [AddCommGroup M] [Module R M] (N : Submodule R M) :
+        N ≤ N := by
+    exact le_rfl"""
+
+            if "кольцо" in joined or "идеал" in joined or "ring" in joined or "ideal" in joined:
+                return f"""import Mathlib
+
+    theorem {name} {{R : Type*}} [Ring R] (I : Ideal R) :
+        I ≤ I := by
+    exact le_rfl"""
+
+            return f"""import Mathlib
+
+    theorem {name} {{G : Type*}} [Group G] (H : Subgroup G) :
+        H ≤ H := by
+    exact le_rfl"""
+
+        if statement_type == "ACTION":
+            return f"""import Mathlib
+
+    theorem {name} {{G X : Type*}} [Group G] [MulAction G X] (g h : G) (x : X) :
+        (g * h) • x = g • (h • x) := by
+    simpa using mul_smul g h x"""
+
+        if statement_type == "CLASSIFICATION":
+            return f"""import Mathlib
+
+    theorem {name} {{P Q : Prop}} (h : P ↔ Q) :
+        P → Q := by
+    exact h.mp"""
+
+        return f"""import Mathlib
+
+    theorem {name} {{R : Type*}} [Ring R] :
+        True := by
+    trivial"""
+
     def extract_candidates_from_text(self, text, source):
         sentences = self.preprocessor.split_sentences(text)
         candidates = []
