@@ -426,6 +426,81 @@ class ArticleStatsExtractor:
         print(f"\nВсего обработано статей: {len(all_stats)}")
 
 
+class StatementDatasetBuilder:
+    def __init__(self):
+        self.preprocessor = TextPreprocessor()
+
+    def make_hash(self, text):
+        normalized = text.lower()
+        normalized = re.sub(r"\s+", " ", normalized)
+        normalized = re.sub(r"[^\wа-яёa-z0-9]+", " ", normalized, flags=re.IGNORECASE)
+        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
+
+    def detect_keywords(self, text):
+        found = []
+        for term_name, patterns in KEY_TERMS.items():
+            for pattern in patterns:
+                if re.search(pattern, text, flags=re.IGNORECASE):
+                    found.append(term_name)
+                    break
+        return sorted(set(found))
+
+    def has_statement_marker(self, text):
+        patterns = [
+            r"\bтеорема\b",
+            r"\bлемма\b",
+            r"\bследствие\b",
+            r"\bпредложение\b",
+            r"\bутверждение\b",
+            r"\bопределение\b",
+            r"\bзамечание\b",
+            r"\btheorem\b",
+            r"\blemma\b",
+            r"\bcorollary\b",
+            r"\bproposition\b",
+            r"\bdefinition\b",
+            r"\bremark\b"
+        ]
+        for pattern in patterns:
+            if re.search(pattern, text, flags=re.IGNORECASE):
+                return True
+        return False
+
+    def is_statement_candidate(self, text):
+        keywords = self.detect_keywords(text)
+        if not keywords:
+            return False
+
+        if self.has_statement_marker(text):
+            return True
+
+        patterns = [
+            r"\bесли\b",
+            r"\bто\b",
+            r"\bдля\s+любого\b",
+            r"\bдля\s+всех\b",
+            r"\bсуществует\b",
+            r"\bevery\b",
+            r"\bexists\b",
+            r"\bif\b",
+            r"\bthen\b",
+            r"∀",
+            r"∃",
+            r"⇒",
+            r"↔",
+            r"≅",
+            r"≤",
+            r"⊂",
+            r"⊆",
+            r"⊲"
+        ]
+
+        for pattern in patterns:
+            if re.search(pattern, text, flags=re.IGNORECASE):
+                return True
+
+        return False
+
 def run_tasks_9_1_and_9_2(pdf_dir="pdfs/", output_dir="output/"):
 
     print("="*70)
