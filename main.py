@@ -430,6 +430,53 @@ class StatementDatasetBuilder:
     def __init__(self):
         self.preprocessor = TextPreprocessor()
 
+    def make_context_statement(self, sentences, index):
+        parts = []
+
+        if index > 0 and len(sentences[index - 1]) <= 500:
+            parts.append(sentences[index - 1])
+
+        parts.append(sentences[index])
+
+        if index + 1 < len(sentences) and len(sentences[index + 1]) <= 500:
+            parts.append(sentences[index + 1])
+
+        return " ".join(parts)
+
+    def extract_candidates_from_text(self, text, source):
+        sentences = self.preprocessor.split_sentences(text)
+        candidates = []
+
+        for index, sentence in enumerate(sentences):
+            if not self.is_statement_candidate(sentence):
+                continue
+
+            statement = self.make_context_statement(sentences, index)
+            keywords = self.detect_keywords(statement)
+
+            candidates.append({
+                "statement": statement,
+                "main_sentence": sentence,
+                "keywords": keywords,
+                "source": source
+            })
+
+        return candidates
+
+    def remove_duplicates(self, candidates):
+        seen = set()
+        result = []
+
+        for candidate in candidates:
+            key = self.make_hash(candidate["main_sentence"])
+            if key in seen:
+                continue
+
+            seen.add(key)
+            result.append(candidate)
+
+        return result
+    
     def make_hash(self, text):
         normalized = text.lower()
         normalized = re.sub(r"\s+", " ", normalized)
@@ -500,6 +547,7 @@ class StatementDatasetBuilder:
                 return True
 
         return False
+    
 
 def run_tasks_9_1_and_9_2(pdf_dir="pdfs/", output_dir="output/"):
 
