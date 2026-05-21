@@ -497,6 +497,69 @@ class StatementDatasetBuilder:
 
         return scores.most_common(1)[0][0]
     
+    def translate_to_english(self, text):
+        replacements = [
+            (r"\bТеорема\b", "Theorem"),
+            (r"\bтеорема\b", "theorem"),
+            (r"\bЛемма\b", "Lemma"),
+            (r"\bлемма\b", "lemma"),
+            (r"\bСледствие\b", "Corollary"),
+            (r"\bследствие\b", "corollary"),
+            (r"\bПредложение\b", "Proposition"),
+            (r"\bпредложение\b", "proposition"),
+            (r"\bОпределение\b", "Definition"),
+            (r"\bопределение\b", "definition"),
+            (r"\bгруппа\b", "group"),
+            (r"\bгруппы\b", "groups"),
+            (r"\bподгруппа\b", "subgroup"),
+            (r"\bподгруппы\b", "subgroups"),
+            (r"\bкольцо\b", "ring"),
+            (r"\bкольца\b", "rings"),
+            (r"\bполе\b", "field"),
+            (r"\bполя\b", "fields"),
+            (r"\bмодуль\b", "module"),
+            (r"\bмодуля\b", "module"),
+            (r"\bалгебра\b", "algebra"),
+            (r"\bалгебры\b", "algebras"),
+            (r"\bидеал\b", "ideal"),
+            (r"\bидеалы\b", "ideals"),
+            (r"\bизоморфизм\b", "isomorphism"),
+            (r"\bизоморфны\b", "are isomorphic"),
+            (r"\bгомоморфизм\b", "homomorphism"),
+            (r"\bдействие\b", "action"),
+            (r"\bорбита\b", "orbit"),
+            (r"\bстабилизатор\b", "stabilizer"),
+            (r"\bесли\b", "if"),
+            (r"\bто\b", "then"),
+            (r"\bдля любого\b", "for every"),
+            (r"\bдля всех\b", "for all"),
+            (r"\bсуществует\b", "there exists"),
+            (r"\bявляется\b", "is"),
+            (r"\bназывается\b", "is called")
+        ]
+
+        result = text
+
+        for pattern, replacement in replacements:
+            result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+
+        return result
+
+    def make_record(self, candidate, record_number):
+        keywords = candidate["keywords"]
+        statement_type = candidate["statement_type"]
+
+        return {
+            "Формулировка на естественном языке (русский)": candidate["statement"],
+            "Формулировка на естественном языке (английский)": self.translate_to_english(candidate["statement"]),
+            "Запись на формальном языке": self.make_formal_statement(statement_type, keywords),
+            "Код Lean 4 + Mathlib": self.make_lean_code(record_number, statement_type, keywords),
+            "Ключевые слова (русский / английский)": "; ".join(keywords),
+            "Тип утверждения": statement_type,
+            "Источник": candidate["source"]
+        }
+
+
     def make_context_statement(self, sentences, index):
         parts = []
 
