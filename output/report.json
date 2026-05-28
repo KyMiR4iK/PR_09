@@ -1,0 +1,14 @@
+{
+  "pdf_dir": "C:\\Programming\\PR_09\\pdfs",
+  "output_dir": "C:\\Programming\\PR_09\\output",
+  "notation_rows": 11,
+  "processed_articles": 50,
+  "dataset_records": 200,
+  "files": {
+    "json": "C:\\Programming\\PR_09\\output\\dataset.json",
+    "csv": "C:\\Programming\\PR_09\\output\\dataset_50.csv",
+    "xlsx": "C:\\Programming\\PR_09\\output\\Dataset.xlsx",
+    "annotation": "C:\\Programming\\PR_09\\output\\annotation_pairs.csv"
+  },
+  "cohens_kappa": null
+}
